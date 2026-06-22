@@ -1,0 +1,541 @@
+@bg: #07060d;
+@ink: #f3eefe;
+@dim: #9b95bf;
+@mag: #ff3d9a;
+@cyan: #34e3ff;
+@amber: #ffc24a;
+@card: #15122a;
+@line: rgba(255, 255, 255, 0.09);
+
+* { box-sizing: border-box; }
+
+.rr-root {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(95% 60% at 12% -5%, fade(@mag, 20%) 0%, transparent 55%),
+    radial-gradient(95% 60% at 92% 102%, fade(@cyan, 18%) 0%, transparent 55%),
+    @bg;
+  color: @ink;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  overflow: hidden;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+// ── Top bar ─────────────────────────────────────────────
+.rr-top {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(14px + env(safe-area-inset-top, 0px)) 18px 8px;
+}
+.rr-brand {
+  display: flex;
+  gap: 6px;
+  font-family: 'Montserrat', 'Inter', sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: 0.06em;
+  &__r { color: @cyan; text-shadow: 0 0 14px fade(@cyan, 55%); }
+  &__l { color: @mag; text-shadow: 0 0 14px fade(@mag, 55%); }
+}
+.rr-iconbtn {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  border: 1px solid @line;
+  background: fade(#fff, 4%);
+  color: @ink;
+  cursor: pointer;
+}
+
+// ── Body ────────────────────────────────────────────────
+.rr-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 4px 18px 14px;
+}
+
+// ── Stage (big image) ───────────────────────────────────
+.rr-stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+
+  &__img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: 22px;
+    border: 1px solid fade(#fff, 12%);
+    box-shadow:
+      0 0 0 1px fade(#000, 40%),
+      0 18px 60px fade(#000, 60%),
+      0 0 50px fade(@mag, 14%);
+    background: @card;
+  }
+}
+
+// developing overlay — the morph
+.rr-morph {
+  position: absolute;
+  inset: 0;
+  border-radius: 22px;
+  overflow: hidden;
+  pointer-events: none;
+  backdrop-filter: blur(2px);
+  background: radial-gradient(70% 70% at 50% 50%, transparent 40%, fade(@bg, 55%) 100%);
+  animation: rr-morph-pulse 1.4s ease-in-out infinite;
+
+  &__scan {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 38%;
+    top: -38%;
+    background: linear-gradient(180deg, transparent, fade(@cyan, 35%), transparent);
+    mix-blend-mode: screen;
+    animation: rr-scan 1.6s linear infinite;
+  }
+  &__label {
+    position: absolute;
+    left: 50%;
+    bottom: 18px;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 15px;
+    border-radius: 999px;
+    background: fade(#000, 55%);
+    border: 1px solid fade(@cyan, 40%);
+    color: @ink;
+    font-weight: 700;
+    font-size: 14px;
+    white-space: nowrap;
+    box-shadow: 0 0 22px fade(@cyan, 30%);
+  }
+  &__dots {
+    display: inline-flex;
+    gap: 3px;
+    i {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: @cyan;
+      animation: rr-dot 1s ease-in-out infinite;
+      &:nth-child(2) { animation-delay: 0.15s; }
+      &:nth-child(3) { animation-delay: 0.3s; }
+    }
+  }
+}
+@keyframes rr-morph-pulse {
+  0%, 100% { box-shadow: inset 0 0 0 0 fade(@mag, 0%); }
+  50% { box-shadow: inset 0 0 60px 4px fade(@mag, 30%); }
+}
+@keyframes rr-scan {
+  0% { top: -40%; }
+  100% { top: 110%; }
+}
+@keyframes rr-dot {
+  0%, 100% { opacity: 0.3; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-3px); }
+}
+
+// chemistry-bath develop-in for the revealed image
+.rr-develop {
+  filter: blur(14px) brightness(0.45) saturate(0.5);
+  transform: scale(1.05);
+  transition: filter 1.4s ease, transform 1.4s ease;
+  &.is-ready {
+    filter: blur(0) brightness(1) saturate(1);
+    transform: scale(1);
+  }
+}
+
+// ── Lineage strip ───────────────────────────────────────
+.rr-lineage {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 8px;
+  min-height: 38px;
+
+  &__item {
+    display: flex;
+    align-items: center;
+    &--tip { margin-left: 2px; }
+  }
+  &__thumb {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1px solid @line;
+    opacity: 0.85;
+    &--tip {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      opacity: 1;
+      border: 1.5px solid fade(@amber, 80%);
+      box-shadow: 0 0 14px fade(@amber, 45%);
+    }
+  }
+  &__link {
+    color: @dim;
+    opacity: 0.6;
+    margin: 0 1px;
+    display: inline-flex;
+  }
+  &__depth {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: @amber;
+    padding: 4px 9px;
+    border-radius: 999px;
+    background: fade(@amber, 12%);
+  }
+}
+
+// ── Tip author line ─────────────────────────────────────
+.rr-tipby {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: @dim;
+  &__lbl { opacity: 0.8; }
+}
+
+// ── Chips / avatars ─────────────────────────────────────
+.rr-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 4px;
+  border-radius: 999px;
+  border: 1px solid @line;
+  background: fade(#fff, 5%);
+  color: @ink;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  &--me {
+    color: @amber;
+    border-color: fade(@amber, 35%);
+    background: fade(@amber, 10%);
+    padding: 4px 12px;
+  }
+  &__name { max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+.rr-ava {
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  flex: 0 0 auto;
+}
+.rr-mono {
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #1a1230;
+  font-weight: 800;
+  flex: 0 0 auto;
+}
+
+// ── Moves ───────────────────────────────────────────────
+.rr-moves {
+  flex: 0 0 auto;
+  &.is-busy { opacity: 0.45; pointer-events: none; }
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 9px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: @dim;
+  }
+  &__row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 9px;
+  }
+}
+.rr-shuffle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1px solid @line;
+  background: fade(#fff, 4%);
+  color: @ink;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+  cursor: pointer;
+  &:disabled { opacity: 0.5; }
+}
+.rr-move {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 6px 13px;
+  border-radius: 16px;
+  border: 1px solid @line;
+  background: linear-gradient(180deg, fade(#fff, 7%), fade(#fff, 2%));
+  color: @ink;
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+  &__icon {
+    color: @cyan;
+    display: inline-flex;
+    filter: drop-shadow(0 0 8px fade(@cyan, 45%));
+  }
+  &__label {
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: center;
+    line-height: 1.15;
+  }
+  &:active {
+    transform: scale(0.95);
+    border-color: fade(@mag, 60%);
+    box-shadow: 0 0 22px fade(@mag, 28%);
+  }
+  &:disabled { opacity: 0.6; }
+}
+
+// ── Revealed ────────────────────────────────────────────
+.rr-reveal {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.rr-stage--reveal { .rr-stage__img { border-color: fade(@amber, 45%); box-shadow: 0 0 0 1px fade(#000,40%), 0 18px 60px fade(#000,60%), 0 0 60px fade(@amber, 22%); } }
+.rr-reveal__badge {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: fade(#000, 55%);
+  border: 1px solid fade(@amber, 55%);
+  color: @amber;
+  font-weight: 800;
+  font-size: 13px;
+  white-space: nowrap;
+  box-shadow: 0 0 24px fade(@amber, 30%);
+  animation: rr-pop 0.5s cubic-bezier(0.3, 1.4, 0.5, 1) both;
+}
+@keyframes rr-pop {
+  0% { opacity: 0; transform: translateX(-50%) scale(0.7); }
+  100% { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+.rr-reveal__cta {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+.rr-btn {
+  flex: 1 1 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 52px;
+  border-radius: 15px;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  border: 1px solid @line;
+  &--ghost { flex: 0 0 auto; padding: 0 18px; background: fade(#fff, 5%); color: @ink; }
+  &--primary {
+    background: linear-gradient(95deg, @mag, #ff6a4d);
+    color: #fff;
+    border: none;
+    box-shadow: 0 8px 28px fade(@mag, 40%);
+  }
+  &:active { transform: scale(0.97); }
+}
+
+// ── Wall ────────────────────────────────────────────────
+.rr-wall {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  &__top {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  &__title {
+    h2 { font-size: 19px; font-weight: 800; }
+    p { font-size: 12.5px; color: @dim; margin-top: 2px; }
+  }
+  &__grid {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-auto-rows: max-content;
+    align-content: start;
+    gap: 11px;
+    padding-bottom: 20px;
+  }
+  &__empty {
+    flex: 1 1 auto;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    color: @dim;
+    font-size: 14px;
+    padding: 40px;
+  }
+}
+.rr-back {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid @line;
+  background: fade(#fff, 5%);
+  color: @ink;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+.rr-cell {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid @line;
+  background: @card;
+  cursor: pointer;
+  padding: 0;
+  &__img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    display: block;
+  }
+  &__foot {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 9px;
+    background: fade(#000, 30%);
+  }
+  &__who {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    &--tap { cursor: pointer; }
+  }
+  &__name {
+    font-size: 12px;
+    font-weight: 600;
+    color: @ink;
+    max-width: 64px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    &--me { color: @amber; font-weight: 700; }
+  }
+  &__move {
+    margin-left: auto;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: @cyan;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    max-width: 70px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  &:active { transform: scale(0.98); }
+}
+
+// ── Misc ────────────────────────────────────────────────
+.rr-toast {
+  position: absolute;
+  top: calc(60px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: fade(#000, 75%);
+  border: 1px solid fade(@mag, 45%);
+  color: @ink;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  animation: rr-pop 0.3s ease both;
+}
+.rr-loading {
+  flex: 1 1 auto;
+  display: grid;
+  place-items: center;
+  &__spin {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 3px solid fade(#fff, 12%);
+    border-top-color: @mag;
+    animation: rr-spin 0.8s linear infinite;
+  }
+}
+@keyframes rr-spin { to { transform: rotate(360deg); } }
+
+.rr-watermark {
+  position: fixed;
+  bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  right: 12px;
+  width: 46px;
+  opacity: 0.16;
+  z-index: 5;
+  pointer-events: none;
+}
