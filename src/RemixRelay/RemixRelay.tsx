@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { ReactNode, PointerEvent as ReactPointerEvent } from 'react';
 import { openAigramProfile, telegramId, isInAigram } from '@shared/runtime';
 import { useRelay } from './hooks/useRelay';
 import { pickTransforms } from './data/transforms';
@@ -84,23 +85,128 @@ function DevelopImg({ src, className }: { src: string; className?: string }) {
   );
 }
 
-/** Lineage strip: frozen ancestors → the current/new tip, connected by links. */
-function Lineage({ trail, tipUrl, depth }: { trail: TrailItem[]; tipUrl: string; depth: number }) {
-  // Show at most the last 3 ancestors + the tip.
-  const anc = trail.slice(-3);
+/** Build the full lineage (oldest→newest, INCLUDING the item itself as the last step). */
+function chainOf(item: {
+  trail?: TrailItem[];
+  imageUrl: string;
+  label?: string;
+  transformLabel?: string;
+  userId?: string;
+  userName?: string;
+  userAvatarUrl?: string;
+  seed?: boolean;
+}, selfUserId?: string): TrailItem[] {
+  const self: TrailItem = {
+    imageUrl: item.imageUrl,
+    label: item.label ?? item.transformLabel ?? '',
+    userId: selfUserId ?? item.userId,
+    userName: item.userName,
+    userAvatarUrl: item.userAvatarUrl,
+    seed: item.seed,
+  };
+  return [...(item.trail || []), self];
+}
+
+/** Browse the whole relay chain — swipe the big image or tap a thumbnail to step
+ *  through every link of the lineage. Defaults to the latest (tip). */
+function ChainViewer({
+  chain,
+  reveal = false,
+  developing = false,
+  overlay = null,
+}: {
+  chain: TrailItem[];
+  reveal?: boolean;
+  developing?: boolean;
+  overlay?: ReactNode;
+}) {
+  const last = chain.length - 1;
+  const [idx, setIdx] = useState(last);
+
+  // snap to the latest whenever the chain changes or a new morph starts
+  const tipUrl = chain[last]?.imageUrl;
+  useEffect(() => { setIdx(chain.length - 1); }, [chain.length, tipUrl]);
+  useEffect(() => { if (developing) setIdx(chain.length - 1); }, [developing, chain.length]);
+
+  const go = (d: number) => {
+    const n = Math.max(0, Math.min(chain.length - 1, idx + d));
+    if (n !== idx) { sfx.tap(); setIdx(n); }
+  };
+
+  const startX = useRef(0);
+  const moved = useRef(false);
+  const onDown = (e: ReactPointerEvent) => { startX.current = e.clientX; moved.current = false; };
+  const onMove = (e: ReactPointerEvent) => { if (Math.abs(e.clientX - startX.current) > 8) moved.current = true; };
+  const onUp = (e: ReactPointerEvent) => {
+    if (!moved.current) return;
+    const dx = e.clientX - startX.current;
+    if (dx > 36) go(-1);
+    else if (dx < -36) go(1);
+  };
+
+  const cur = chain[idx] || chain[last];
+  const isLast = idx === last;
+  const multi = chain.length > 1;
+
   return (
-    <div className="rr-lineage">
-      {anc.map((a, i) => (
-        <div className="rr-lineage__item" key={i}>
-          <img className="rr-lineage__thumb" src={a.imageUrl} alt="" draggable={false} />
-          <span className="rr-lineage__link"><Icon name="chain" size={14} /></span>
-        </div>
-      ))}
-      <div className="rr-lineage__item rr-lineage__item--tip">
-        <img className="rr-lineage__thumb rr-lineage__thumb--tip" src={tipUrl} alt="" draggable={false} />
+    <>
+      <div
+        className={`rr-stage ${reveal ? 'rr-stage--reveal' : ''}`}
+        onPointerDown={onDown}
+        onPointerMove={onMove}
+        onPointerUp={onUp}
+      >
+        <DevelopImg src={cur.imageUrl} className="rr-stage__img" />
+        {isLast && overlay}
+        {multi && (
+          <>
+            <button
+              className="rr-stage__nav rr-stage__nav--prev"
+              disabled={idx === 0}
+              onPointerDown={e => { e.stopPropagation(); go(-1); }}
+              aria-label="previous"
+            >
+              <Icon name="back" size={20} />
+            </button>
+            <button
+              className="rr-stage__nav rr-stage__nav--next"
+              disabled={isLast}
+              onPointerDown={e => { e.stopPropagation(); go(1); }}
+              aria-label="next"
+            >
+              <Icon name="arrow" size={20} />
+            </button>
+            <span className="rr-stage__step">{idx + 1} / {chain.length}</span>
+          </>
+        )}
       </div>
-      <span className="rr-lineage__depth">{t('linkN', { n: depth + 1 })}</span>
-    </div>
+
+      <div className="rr-stepby">
+        <span className="rr-stepby__move">{cur.label || t('seedRoot')}</span>
+        <span className="rr-stepby__lbl">{t('by')}</span>
+        <AuthorChip
+          userId={cur.userId}
+          userName={cur.userName}
+          userAvatarUrl={cur.userAvatarUrl}
+          seed={cur.seed}
+        />
+      </div>
+
+      <div className="rr-lineage rr-lineage--nav">
+        {chain.map((a, i) => (
+          <span className="rr-lineage__item" key={i}>
+            <button
+              className={`rr-lineage__thumbbtn ${i === idx ? 'is-active' : ''} ${i === last ? 'is-tip' : ''}`}
+              onClick={() => { sfx.tap(); setIdx(i); }}
+              aria-label={`link ${i + 1}`}
+            >
+              <img className="rr-lineage__thumb" src={a.imageUrl} alt="" draggable={false} />
+            </button>
+            {i < last && <span className="rr-lineage__link"><Icon name="chain" size={12} /></span>}
+          </span>
+        ))}
+      </div>
+    </>
   );
 }
 
@@ -123,31 +229,22 @@ function Stage({
 }) {
   return (
     <>
-      <div className="rr-stage">
-        <img className="rr-stage__img" src={tip.imageUrl} alt="" draggable={false} />
-        {developing && (
-          <div className="rr-morph">
-            <div className="rr-morph__scan" />
-            <div className="rr-morph__label">
-              <Icon name="wand" size={16} />
-              <span>{busyLabel}</span>
-              <span className="rr-morph__dots"><i /><i /><i /></span>
+      <ChainViewer
+        chain={chainOf(tip)}
+        developing={developing}
+        overlay={
+          developing ? (
+            <div className="rr-morph">
+              <div className="rr-morph__scan" />
+              <div className="rr-morph__label">
+                <Icon name="wand" size={16} />
+                <span>{busyLabel}</span>
+                <span className="rr-morph__dots"><i /><i /><i /></span>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
-
-      <Lineage trail={tip.trail} tipUrl={tip.imageUrl} depth={tip.depth} />
-
-      <div className="rr-tipby">
-        <span className="rr-tipby__lbl">{t('by')}</span>
-        <AuthorChip
-          userId={tip.userId}
-          userName={tip.userName}
-          userAvatarUrl={tip.userAvatarUrl}
-          seed={tip.seed}
-        />
-      </div>
+          ) : null
+        }
+      />
 
       <div className={`rr-moves ${developing ? 'is-busy' : ''}`}>
         <div className="rr-moves__head">
@@ -191,18 +288,15 @@ function Revealed({
   }, []);
   return (
     <div className="rr-reveal">
-      <div className="rr-stage rr-stage--reveal">
-        <DevelopImg src={node.imageUrl} className="rr-stage__img" />
-        <div className="rr-reveal__badge">
-          <Icon name="chain" size={15} />
-          <span>{t('youExtended')}</span>
-        </div>
-      </div>
-
-      <Lineage
-        trail={node.trail}
-        tipUrl={node.imageUrl}
-        depth={node.depth}
+      <ChainViewer
+        chain={chainOf(node, node.userId ?? (telegramId || undefined))}
+        reveal
+        overlay={
+          <div className="rr-reveal__badge">
+            <Icon name="chain" size={15} />
+            <span>{t('youExtended')}</span>
+          </div>
+        }
       />
 
       <div className="rr-reveal__cta">

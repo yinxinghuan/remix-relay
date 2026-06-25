@@ -76,6 +76,7 @@ const STRINGS: Record<string, Loc> = {
   back: { en: 'Back', zh: '返回', es: 'Atrás', pt: 'Voltar' },
   youExtended: { en: 'You extended the chain', zh: '你接长了这条链', es: 'Extendiste la cadena', pt: 'Você esticou a corrente' },
   linkN: { en: 'Link {n}', zh: '第 {n} 环', es: 'Eslabón {n}', pt: 'Elo {n}' },
+  seedRoot: { en: 'Original', zh: '原图', es: 'Original', pt: 'Original' },
   reveal: { en: 'Remixing…', zh: '变形中…', es: 'Remezclando…', pt: 'Remixando…' },
   wallTitle: { en: 'The relay', zh: '接力墙', es: 'El relevo', pt: 'O revezamento' },
   wallSub: { en: 'Tap any image to remix it next.', zh: '点任意一张，接着把它变形', es: 'Toca una imagen para remezclarla.', pt: 'Toque numa imagem para remixar.' },

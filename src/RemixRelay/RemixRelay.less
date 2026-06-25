@@ -230,6 +230,101 @@
   &__lbl { opacity: 0.8; }
 }
 
+// ── Chain viewer (swipe + tappable thumbnails) ──────────
+.rr-stage {
+  touch-action: pan-y;
+  &__nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 38px;
+    height: 38px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: fade(#000, 50%);
+    border: 1px solid fade(#fff, 16%);
+    color: @ink;
+    backdrop-filter: blur(4px);
+    cursor: pointer;
+    z-index: 3;
+    transition: opacity 0.15s, transform 0.08s;
+    &--prev { left: 10px; }
+    &--next { right: 10px; }
+    &:active { transform: translateY(-50%) scale(0.9); }
+    &:disabled { opacity: 0; pointer-events: none; }
+  }
+  &__step {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 3px 12px;
+    border-radius: 999px;
+    background: fade(#000, 55%);
+    border: 1px solid @line;
+    color: @ink;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    z-index: 3;
+  }
+}
+
+.rr-stepby {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  color: @dim;
+  &__move {
+    font-weight: 800;
+    color: @ink;
+    max-width: 52%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  &__lbl { opacity: 0.7; }
+}
+
+.rr-lineage--nav {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+  &::-webkit-scrollbar { display: none; }
+  .rr-lineage__item { flex: 0 0 auto; }
+  .rr-lineage__thumbbtn {
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    display: inline-flex;
+    border-radius: 9px;
+    .rr-lineage__thumb {
+      width: 34px;
+      height: 34px;
+      opacity: 0.55;
+      transition: opacity 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.08s;
+    }
+    &:active .rr-lineage__thumb { transform: scale(0.92); }
+    &.is-active .rr-lineage__thumb {
+      opacity: 1;
+      border-color: fade(@mag, 85%);
+      box-shadow: 0 0 0 2px fade(@mag, 60%), 0 0 14px fade(@mag, 45%);
+    }
+    &.is-tip .rr-lineage__thumb { border-color: fade(@amber, 80%); }
+    &.is-tip.is-active .rr-lineage__thumb {
+      border-color: fade(@amber, 90%);
+      box-shadow: 0 0 0 2px fade(@amber, 70%), 0 0 14px fade(@amber, 50%);
+    }
+  }
+}
+
 // ── Chips / avatars ─────────────────────────────────────
 .rr-chip {
   display: inline-flex;
