@@ -9,6 +9,8 @@ import type { RemixNode, Tip, TrailItem } from './types';
 import { sfx } from './utils/sounds';
 import './RemixRelay.less';
 
+const ALTERU_APP_URL = 'https://apps.apple.com/app/id6769646546';
+
 const isUrl = (s?: string) => !!s && /^https?:\/\//.test(s);
 
 function Avatar({ name, url, size = 20 }: { name?: string; url?: string; size?: number }) {
@@ -339,8 +341,13 @@ function Wall({
         </div>
       </div>
       {empty ? (
-        <div className="rr-wall__empty">
-          {loaded ? t('wallEmptyFirst') : isInAigram ? t('wallEmptyFirst') : t('wallEmptyOpen')}
+        <div className={`rr-wall__empty${loaded || isInAigram ? '' : ' rr-wall__download'}`}>
+          <span>{loaded ? t('wallEmptyFirst') : isInAigram ? t('wallEmptyFirst') : t('wallEmptyOpen')}</span>
+          {!loaded && !isInAigram && (
+            <a href={ALTERU_APP_URL} target="_blank" rel="noopener noreferrer">
+              {t('downloadAlterU')}
+            </a>
+          )}
         </div>
       ) : (
         <div className="rr-wall__grid">
